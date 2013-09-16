@@ -210,7 +210,9 @@ early_param("sunxi_g2d_mem_reserve", reserve_g2d_param);
 #if defined CONFIG_VIDEO_DECODER_SUN4I || \
 	defined CONFIG_VIDEO_DECODER_SUN4I_MODULE || \
 	defined CONFIG_VIDEO_DECODER_SUN5I || \
-	defined CONFIG_VIDEO_DECODER_SUN5I_MODULE
+	defined CONFIG_VIDEO_DECODER_SUN5I_MODULE || \
+	defined CONFIG_VIDEO_DECODER_SUN7I || \
+	defined CONFIG_VIDEO_DECODER_SUN7I_MODULE
 /* The VE block is used by:
  *
  * - the Cedar video engine, drivers/media/video/sun4i
@@ -420,9 +422,14 @@ static void sun4i_restart(char mode, const char *cmd)
 	/* use watch-dog to reset system */
 	#define WATCH_DOG_CTRL_REG  (SW_VA_TIMERC_IO_BASE + 0x0090)
 	#define WATCH_DOG_MODE_REG  (SW_VA_TIMERC_IO_BASE + 0x0094)
-	writel(3, WATCH_DOG_MODE_REG);
-	writel(((0xA57 << 1) | (1 << 0)), WATCH_DOG_CTRL_REG);
-	while(1);
+
+	*(volatile unsigned int *)WATCH_DOG_MODE_REG = 0;
+	__delay(100000);
+	*(volatile unsigned int *)WATCH_DOG_MODE_REG |= 2;
+	while(1) {
+		__delay(100);
+		*(volatile unsigned int *)WATCH_DOG_MODE_REG |= 1;
+	}
 }
 
 static void __init sw_timer_init(void)
